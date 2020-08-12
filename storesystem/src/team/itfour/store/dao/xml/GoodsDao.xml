@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+
+  <mapper namespace="team.itfour.store.dao.GoodsDao">
+  
+    <resultMap type="Goods" id="GoodsMap">
+      <id column="goodsNo" property="goodsNo" />
+      <result column="goodsName" property="goodsName"/>
+      <result column="mainFigure" property="mainFigure"/>
+      <result column="goodsNumber" property="goodsNumber"/>
+      <result column="goodsPrice" property="goodsPrice"/>
+      <result column="goodsRemark" property="goodsRemark"/>     
+        
+       <!-- 使用一对一关系映射，一个商品对应一种商品类型 -->
+     <association property="goodsBrand" javaType="goodsBrand">
+        <id column="brandNo" property="brandNo"/>
+        <result column="brandName" property="brandName"/>
+     </association>
+     
+     <!-- 一个商品属于一个供应商，一个对一的关系 -->
+     <association property="goodsType" javaType="goodsType">
+        <id column="typeNo" property="typeNo"/>
+        <result column="typeName" property="typeName"/>
+     </association>
+            
+    </resultMap>
+      
+      
+    <sql id="pagerWhere">
+       <where>
+           <if test="condition!=null and condition.goodsName!=null ">
+            and  goodsName like   concat('%',#{condition.goodsName},'%')
+           </if>
+       </where>
+     </sql>
+ 
+     <sql id="fromsql">
+      from goods g join goods_type t on g.typeNo=t.typeNo join goods_brand b on g.brandNo = b.brandNo 
+     </sql>
+ 	
+   <select id="findByPager" resultMap="GoodsMap" parameterType="Pager">
+     select  g.goodsNo,g.goodsName,g.mainFigure,g.goodsNumber,g.goodsPrice,g.goodsRemark,g.brandNo,g.typeNo,t.typeName,b.brandName <include refid="fromsql" />
+        <include refid="pagerWhere" />
+        
+        order by goodsNo desc
+       <if test="start !=null and size !=null">
+          limit  #{start},#{size}
+       </if>
+   </select>
+   
+      <select id="findTotalByPager" resultType="int" parameterType="Pager">
+        select count(*)    <include refid="fromsql" /> 
+         <include refid="pagerWhere" />
+   </select>
+  	
+  	
+  	 <insert id="add" parameterType="Goods"> 
+       insert into goods(goodsName,mainFigure,goodsNumber,goodsPrice,goodsRemark,brandNo,typeNo)  
+         values(#{goodsName},#{mainFigure},#{goodsNumber},#{goodsPrice},#{goodsRemark},#{goodsBrand.brandNo},#{goodsType.typeNo})
+    </insert>
+  	  	 
+  	  	 
+	<update id="edit" parameterType="Goods">
+  	 	update goods
+  	 	<set>
+  	 	    <if test="goodsName !=null">goodsName=#{goodsName},</if>
+  	 		<if test="mainFigure !=null">mainFigure=#{mainFigure},</if>
+  	 		<if test="goodsNumber!=null">goodsNumber = #{goodsNumber}, </if>
+   		    <if test="goodsPrice!=null">goodsPrice = #{goodsPrice}, </if>
+  	 		<if test="goodsRemark !=null">goodsRemark=#{goodsRemark},</if>
+  	 		<if test="goodsBrand!=null and goodsBrand.brandNo!=null">brandNo = #{goodsBrand.brandNo}, </if>
+  	 		<if test="goodsType!=null and goodsType.typeNo!=null">typeNo = #{goodsType.typeNo}, </if>
+  	 	</set>
+  	 	where goodsNo = #{goodsNo}
+  	 </update>
+  	 
+  	 
+  	 <delete id="delete" parameterType="Goods">
+  	 	delete from goods where goodsNo= #{goodsNo}
+  	 </delete>
+  	 
+  </mapper>
+
